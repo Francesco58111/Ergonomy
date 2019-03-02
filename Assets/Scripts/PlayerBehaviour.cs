@@ -2,12 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 using XInputDotNetPure;
+using UnityEngine.Tilemaps;
 
 
 public class PlayerBehaviour : MonoBehaviour
 {
 
     public Rigidbody2D rb;
+    public Tilemap tilemapVictory;
+    public TilemapRenderer whiteTilemap;
+    public Camera cam;
     private Vector2 direction;
 
     public float moveSpeed;
@@ -74,8 +78,8 @@ public class PlayerBehaviour : MonoBehaviour
         rb.velocity = direction.normalized * moveSpeed * Time.deltaTime;
 
         Debug.DrawRay(new Vector2(transform.position.x - offset, transform.position.y), Vector2.left, Color.blue, minDistance);
-        Debug.DrawRay(new Vector2(transform.position.x + offset, transform.position.y), Vector2.right, Color.white, minDistance);
-        Debug.DrawRay(new Vector2(transform.position.x, transform.position.y + offset), Vector2.up, Color.red, minDistance);
+        Debug.DrawRay(new Vector2(transform.position.x + offset, transform.position.y), Vector2.right, Color.red, minDistance);
+        Debug.DrawRay(new Vector2(transform.position.x, transform.position.y + offset), Vector2.up, Color.white, minDistance);
 
     }
 
@@ -85,34 +89,47 @@ public class PlayerBehaviour : MonoBehaviour
         rightRay = Physics2D.Raycast(new Vector2(transform.position.x + offset, transform.position.y), Vector2.right, minDistance, raycastLayer);
         upRay = Physics2D.Raycast(new Vector2(transform.position.x, transform.position.y + offset), Vector2.up, minDistance, raycastLayer);
 
-        Debug.Log("gauche" + leftRay.distance);
-        Debug.Log("droite" + rightRay.distance);
-        Debug.Log("haut" + upRay.distance);
 
 
         if (leftRay.collider)
         {
             float percent = leftRay.distance / minDistance;
             leftMotor = vibrationCurve.Evaluate(percent);
+            Debug.Log("gauche" + leftRay.distance);
         }
-        
+
 
 
         if (rightRay.collider)
         {
             float percent = rightRay.distance / minDistance;
             rightMotor = vibrationCurve.Evaluate(percent);
+            Debug.Log("droite" + rightRay.distance);
         }
-        
+
 
 
         if (upRay.collider)
         {
             float percent = upRay.distance / minDistance;
             upMotors = vibrationCurve.Evaluate(percent);
+            Debug.Log("haut" + upRay.distance);
         }
-        
-        
+
+        if(upRay.collider == null)
+        {
+            upMotors = vibrationCurve.Evaluate(1);
+        }
+
+        if (rightRay.collider == null)
+        {
+            rightMotor = vibrationCurve.Evaluate(1);
+        }
+
+        if (leftRay.collider == null)
+        {
+            leftMotor = vibrationCurve.Evaluate(1);
+        }
 
         VibrationUpdate();
 
@@ -123,6 +140,11 @@ public class PlayerBehaviour : MonoBehaviour
         GamePad.SetVibration(PlayerIndex.One, (upMotors + leftMotor), (rightMotor + upMotors));
     }
 
-
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        tilemapVictory.color = Color.green;
+        cam.backgroundColor = Color.white;
+        whiteTilemap.sortingOrder = -1;
+    }
 
 }
