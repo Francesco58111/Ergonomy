@@ -774,7 +774,7 @@ MonoBehaviour:
   moveSpeed: 300
   minDistance: 1.5
   currentScore: 0
-  victoryScore: 0
+  victoryScore: 8
   offset: 0.55
   leftMotor: 0
   rightMotor: 0
