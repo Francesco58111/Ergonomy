@@ -4,49 +4,53 @@ using UnityEngine;
 using XInputDotNetPure;
 using UnityEngine.Tilemaps;
 using Cinemachine;
+using TMPro;
+using System;
+using UnityEngine.SceneManagement;
+
 
 
 public class PlayerBehaviour : MonoBehaviour
 {
     [Header("Récupération des components")]
     public Rigidbody2D rb;
-
     public Tilemap tilemapVictory;
     public Tilemap wallTilempa;
     public Tilemap whiteTilemap;
     public TilemapRenderer whiteTilemapRenderer;
-
     public Camera cam;
     public CinemachineVirtualCamera camPlayer;
+    public TextMeshProUGUI timerText;
 
-    [Header("Set up Player Movement")]
+    [Header("Player Movement Set Up")]
     private Vector2 direction;
     public float moveSpeed;
     public float minDistance = 5;
 
-    [Header("Victory Set up pour BlindPath")]
+    [Header("Parameters Set Up - BlindPath")]
     public float currentScore;
     public float victoryScore;
+    public float currentTimer;
+    public float resetTimerAt;
+    private bool danger;
+    public int sceneIndex;
 
 
-    [Header("Set up Vibrations Behaviour")]
+    [Header("Vibrations Set Up")]
     private RaycastHit2D leftRay;
     private RaycastHit2D rightRay;
     private RaycastHit2D upRay;
     private int raycastLayer;
-    
     public float offset;
-
     [SerializeField]
     private float leftMotor;
     [SerializeField]
     private float rightMotor;
     [SerializeField]
     private float upMotors;
-
     public bool useVibration = true;
-
     public AnimationCurve vibrationCurve;
+
 
 
 
@@ -57,9 +61,11 @@ public class PlayerBehaviour : MonoBehaviour
         GamePad.SetVibration(PlayerIndex.One, 0,0);
     }
 
+
     private void Awake()
     {
         raycastLayer = LayerMask.GetMask("Raycast");
+        currentTimer = resetTimerAt;
     }
 
 
@@ -67,19 +73,32 @@ public class PlayerBehaviour : MonoBehaviour
     {
         Move();
 
-
+        
         if(useVibration)
         {
             CheckVibration();
-
-            if(currentScore == victoryScore)
-            {
-                Debug.Log("Winner");
-            }
         }
         else
         {
             GamePad.SetVibration(PlayerIndex.One, 0, 0);
+
+            if (currentScore == victoryScore)
+            {
+                Debug.Log("Winner");
+            }
+
+            if(danger)
+            {
+                currentTimer -= Time.deltaTime;
+            }
+
+            int timerInt = (int)currentTimer;
+            timerText.text = timerInt.ToString();
+
+            if(currentTimer < 0)
+            {
+                GameOver();
+            }
 
             Bounds PCBounds = this.gameObject.GetComponent<Collider2D>().bounds;
 
@@ -95,7 +114,15 @@ public class PlayerBehaviour : MonoBehaviour
         }
     }
 
+    private void GameOver()
+    {
+        Debug.Log("Loser");
+        SceneManager.LoadScene(sceneIndex);
+    }
 
+    /// <summary>
+    /// Déplacement du joueur
+    /// </summary>
     private void Move()
     {
         direction.x = Input.GetAxis("Horizontal");
@@ -103,12 +130,17 @@ public class PlayerBehaviour : MonoBehaviour
 
         rb.velocity = direction.normalized * moveSpeed * Time.deltaTime;
 
+        //Debug de Raycast
         Debug.DrawRay(new Vector2(transform.position.x - offset, transform.position.y), Vector2.left, Color.blue, minDistance);
         Debug.DrawRay(new Vector2(transform.position.x + offset, transform.position.y), Vector2.right, Color.red, minDistance);
         Debug.DrawRay(new Vector2(transform.position.x, transform.position.y + offset), Vector2.up, Color.white, minDistance);
 
     }
 
+
+    /// <summary>
+    /// Set up les vibrations gauche et droite en fonction des différents Raycasts
+    /// </summary>
     public void CheckVibration()
     {
         leftRay = Physics2D.Raycast(new Vector2(transform.position.x - offset, transform.position.y), Vector2.left, minDistance, raycastLayer);
@@ -124,8 +156,6 @@ public class PlayerBehaviour : MonoBehaviour
             Debug.Log("gauche" + leftRay.distance);
         }
 
-
-
         if (rightRay.collider)
         {
             float percent = rightRay.distance / minDistance;
@@ -133,14 +163,14 @@ public class PlayerBehaviour : MonoBehaviour
             Debug.Log("droite" + rightRay.distance);
         }
 
-
-
         if (upRay.collider)
         {
             float percent = upRay.distance / minDistance;
             upMotors = vibrationCurve.Evaluate(percent);
             Debug.Log("haut" + upRay.distance);
         }
+
+
 
         if(upRay.collider == null)
         {
@@ -157,15 +187,23 @@ public class PlayerBehaviour : MonoBehaviour
             leftMotor = vibrationCurve.Evaluate(1);
         }
 
+
         VibrationUpdate();
 
     }
 
+    /// <summary>
+    /// Update les Vibrations en fonction du Set Up posé dans le CheckVibration()
+    /// </summary>
     private void VibrationUpdate()
     {
         GamePad.SetVibration(PlayerIndex.One, (upMotors + leftMotor), (rightMotor + upMotors));
     }
 
+    /// <summary>
+    /// Destruction des Tiles
+    /// </summary>
+    /// <param name="pos"></param>
     void DestroyTile(Vector3 pos)
     {
         Vector3Int tilePosition = tilemapVictory.WorldToCell(pos);
@@ -174,8 +212,10 @@ public class PlayerBehaviour : MonoBehaviour
         {
             currentScore += 1;
             tilemapVictory.SetTile(tilePosition, null);
+            currentTimer = resetTimerAt;
         }
     }
+
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -187,10 +227,6 @@ public class PlayerBehaviour : MonoBehaviour
                 cam.backgroundColor = Color.white;
                 whiteTilemapRenderer.sortingOrder = -1;
             }
-            else
-            {
-                
-            }
         }
         
         if(collision.gameObject.layer == 5)
@@ -198,16 +234,28 @@ public class PlayerBehaviour : MonoBehaviour
             wallTilempa.color = Color.white;
             whiteTilemap.color = Color.green;
             camPlayer.gameObject.SetActive(false);
+            danger = false;
         }
     }
+
 
     private void OnTriggerExit2D(Collider2D collision)
     {
         if (collision.gameObject.layer == 5)
         {
             wallTilempa.color = Color.black;
-            tilemapVictory.color = Color.red;
+            whiteTilemap.color = Color.red;
             camPlayer.gameObject.SetActive(true);
+            danger = true;
+        }
+    }
+
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (collision.gameObject.layer == 5)
+        {
+            currentTimer = resetTimerAt;
         }
     }
 
