@@ -73,6 +73,10 @@ public class PlayerBehaviour : MonoBehaviour
     {
         Move();
 
+        if (Input.GetKeyUp(KeyCode.R))
+        {
+            GameOver();
+        }
         
         if(useVibration)
         {
