@@ -771,10 +771,14 @@ MonoBehaviour:
   whiteTilemapRenderer: {fileID: 1343672285}
   cam: {fileID: 534669904}
   camPlayer: {fileID: 1372744957}
+  timerText: {fileID: 0}
   moveSpeed: 300
   minDistance: 1.5
   currentScore: 0
   victoryScore: 10
+  currentTimer: 0
+  resetTimerAt: 15
+  sceneIndex: 0
   offset: 0.55
   leftMotor: 0
   rightMotor: 0
