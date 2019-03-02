@@ -778,7 +778,7 @@ MonoBehaviour:
   victoryScore: 10
   currentTimer: 0
   resetTimerAt: 15
-  sceneIndex: 0
+  sceneIndex: 2
   offset: 0.55
   leftMotor: 0
   rightMotor: 0

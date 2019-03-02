@@ -1802,10 +1802,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rb: {fileID: 1707842903}
   tilemapVictory: {fileID: 1750438667}
+  wallTilempa: {fileID: 0}
   whiteTilemap: {fileID: 1343672285}
+  whiteTilemapRenderer: {fileID: 0}
   cam: {fileID: 534669904}
+  camPlayer: {fileID: 0}
+  timerText: {fileID: 0}
   moveSpeed: 300
   minDistance: 0.8
+  currentScore: 0
+  victoryScore: 0
+  currentTimer: 0
+  resetTimerAt: 0
+  sceneIndex: 3
   offset: 0.55
   leftMotor: 0
   rightMotor: 0
